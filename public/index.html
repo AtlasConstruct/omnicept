@@ -3,77 +3,137 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Omnicept - Data Visualization for Everyone</title>
+  <title>Omnicept — Data Visualization for Everyone</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
+
+  <!-- Header -->
   <header class="header">
-    <div class="logo-container">
-      <img src="assets/logo.svg" alt="Omnicept Logo" class="logo">
-      <h1>Omnicept</h1>
+    <div class="header-inner">
+      <div class="logo-container">
+        <img src="assets/logo.svg" alt="Omnicept" class="logo">
+        <div class="logo-text">
+          <h1>OMNICEPT</h1>
+          <span class="version-tag"><span>v1.0.0</span></span>
+        </div>
+      </div>
+      <p class="tagline">Transform any dataset into clear, actionable insights</p>
     </div>
-    <p class="tagline">Transform any dataset into clear, actionable insights</p>
   </header>
 
   <main class="main-content">
+
     <!-- Upload Section -->
     <section id="upload-section" class="section active">
       <div class="upload-area" id="drop-zone">
-        <div class="upload-icon">📊</div>
-        <h2>Drop your data here</h2>
+        <div class="upload-icon">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <h2>DROP YOUR DATA HERE</h2>
         <p>or click to browse</p>
         <input type="file" id="file-input" accept=".csv,.json,.xlsx" hidden>
-        <button class="btn btn-primary" id="browse-btn">Choose File</button>
-        <p class="supported-formats">Supported: CSV, JSON, Excel (.xlsx)</p>
+        <button class="btn btn-primary" id="browse-btn">
+          <span>Choose File</span>
+        </button>
+        <p class="supported-formats">CSV &bull; JSON &bull; Excel (.xlsx)</p>
       </div>
     </section>
 
     <!-- Loading Section -->
     <section id="loading-section" class="section">
-      <div class="loading-spinner"></div>
-      <p>Analyzing your data...</p>
+      <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>ANALYZING YOUR DATA</p>
+      </div>
     </section>
 
     <!-- Visualization Section -->
     <section id="viz-section" class="section">
-      <div class="data-info">
-        <h2 id="dataset-title">Your Dataset</h2>
-        <p id="dataset-stats"></p>
+
+      <!-- Dataset Info Bar -->
+      <div class="data-info-bar">
+        <div class="data-info-left">
+          <h2 id="dataset-title">Dataset</h2>
+          <span class="data-stats" id="dataset-stats"></span>
+        </div>
+        <div class="data-info-right">
+          <button class="btn btn-ghost" id="toggle-table-btn">
+            <span>View Table</span>
+          </button>
+        </div>
       </div>
 
+      <!-- Chart Controls -->
       <div class="chart-controls">
-        <label for="chart-type">Chart Type:</label>
-        <select id="chart-type">
-          <option value="auto">Auto-detect</option>
-          <option value="bar">Bar Chart</option>
-          <option value="line">Line Chart</option>
-          <option value="pie">Pie Chart</option>
-          <option value="doughnut">Doughnut Chart</option>
-          <option value="scatter">Scatter</option>
-        </select>
-
-        <label for="x-column">X-Axis:</label>
-        <select id="x-column"></select>
-
-        <label for="y-column">Y-Axis:</label>
-        <select id="y-column"></select>
+        <div class="control-group">
+          <label for="chart-type">TYPE</label>
+          <select id="chart-type">
+            <option value="auto">Auto-detect</option>
+            <option value="bar">Bar Chart</option>
+            <option value="line">Line Chart</option>
+            <option value="pie">Pie Chart</option>
+            <option value="doughnut">Doughnut</option>
+            <option value="scatter">Scatter</option>
+            <option value="polarArea">Polar Area</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label for="x-column">X-AXIS</label>
+          <select id="x-column"></select>
+        </div>
+        <div class="control-group">
+          <label for="y-column">Y-AXIS</label>
+          <select id="y-column"></select>
+        </div>
       </div>
 
-      <div class="chart-container">
+      <!-- Chart -->
+      <div class="chart-wrapper">
         <canvas id="main-chart"></canvas>
       </div>
 
-      <div class="chart-actions">
-        <button class="btn btn-secondary" id="new-upload-btn">Upload New Dataset</button>
-        <button class="btn btn-primary" id="export-btn">Export Chart</button>
+      <!-- Data Table (hidden by default) -->
+      <div class="data-table-wrapper" id="data-table-wrapper" style="display:none;">
+        <div class="table-scroll">
+          <table id="data-table">
+            <thead id="table-head"></thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+        <p class="table-note" id="table-note"></p>
       </div>
+
+      <!-- Actions -->
+      <div class="chart-actions">
+        <button class="btn btn-secondary" id="new-upload-btn">
+          <span>New Dataset</span>
+        </button>
+        <button class="btn btn-primary" id="export-btn">
+          <span>Export PNG</span>
+        </button>
+      </div>
+
     </section>
   </main>
 
+  <!-- Toast -->
+  <div id="toast" class="toast" role="alert"></div>
+
+  <!-- Footer -->
   <footer class="footer">
-    <p>Omnicept v1.0.0 • <a href="https://github.com/AtlasConstruct/omnicept">GitHub</a></p>
+    <div class="footer-inner">
+      <p>&copy; 2026 Atlas Construct</p>
+      <div class="footer-rule"></div>
+      <p><a href="https://github.com/AtlasConstruct/omnicept" target="_blank">GitHub</a></p>
+    </div>
   </footer>
 
   <script src="app.js"></script>
