@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Omnicept - Data Visualization for Everyone</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+  <header class="header">
+    <div class="logo-container">
+      <img src="assets/logo.svg" alt="Omnicept Logo" class="logo">
+      <h1>Omnicept</h1>
+    </div>
+    <p class="tagline">Transform any dataset into clear, actionable insights</p>
+  </header>
+
+  <main class="main-content">
+    <!-- Upload Section -->
+    <section id="upload-section" class="section active">
+      <div class="upload-area" id="drop-zone">
+        <div class="upload-icon">📊</div>
+        <h2>Drop your data here</h2>
+        <p>or click to browse</p>
+        <input type="file" id="file-input" accept=".csv,.json,.xlsx" hidden>
+        <button class="btn btn-primary" id="browse-btn">Choose File</button>
+        <p class="supported-formats">Supported: CSV, JSON, Excel (.xlsx)</p>
+      </div>
+    </section>
+
+    <!-- Loading Section -->
+    <section id="loading-section" class="section">
+      <div class="loading-spinner"></div>
+      <p>Analyzing your data...</p>
+    </section>
+
+    <!-- Visualization Section -->
+    <section id="viz-section" class="section">
+      <div class="data-info">
+        <h2 id="dataset-title">Your Dataset</h2>
+        <p id="dataset-stats"></p>
+      </div>
+
+      <div class="chart-controls">
+        <label for="chart-type">Chart Type:</label>
+        <select id="chart-type">
+          <option value="auto">Auto-detect</option>
+          <option value="bar">Bar Chart</option>
+          <option value="line">Line Chart</option>
+          <option value="pie">Pie Chart</option>
+          <option value="doughnut">Doughnut Chart</option>
+          <option value="scatter">Scatter</option>
+        </select>
+
+        <label for="x-column">X-Axis:</label>
+        <select id="x-column"></select>
+
+        <label for="y-column">Y-Axis:</label>
+        <select id="y-column"></select>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="main-chart"></canvas>
+      </div>
+
+      <div class="chart-actions">
+        <button class="btn btn-secondary" id="new-upload-btn">Upload New Dataset</button>
+        <button class="btn btn-primary" id="export-btn">Export Chart</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Omnicept v1.0.0 • <a href="https://github.com/AtlasConstruct/omnicept">GitHub</a></p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
