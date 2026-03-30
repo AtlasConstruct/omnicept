@@ -283,42 +283,109 @@
 
     var columns = Object.keys(rawData[0]);
     var key = dupKeySelect.value;
+    var isFiltered = (currentData !== rawData);
+
+    // Always scan raw data for duplicates
     dupInfo = detectDuplicates(rawData, columns, key);
 
-    if (dupInfo.count > 0) {
-      dupBar.style.display = 'flex';
+    dupBar.style.display = 'flex';
+
+    if (isFiltered) {
+      // Data has been filtered or grouped already
+      dupMsg.textContent = 'Active: ' + currentData.length + ' rows (from ' + rawData.length + ' original)';
+      dupFilterBtn.style.display = 'none';
+      dupGroupBtn.style.display = 'none';
+      dupResetBtn.style.display = '';
+    } else if (dupInfo.count > 0) {
       dupMsg.textContent = dupInfo.count + ' duplicate' + (dupInfo.count > 1 ? 's' : '') + ' found';
       dupFilterBtn.style.display = '';
       dupGroupBtn.style.display = '';
-      dupResetBtn.style.display = (currentData !== rawData) ? '' : 'none';
+      dupResetBtn.style.display = 'none';
     } else {
       dupMsg.textContent = 'No duplicates detected';
       dupFilterBtn.style.display = 'none';
       dupGroupBtn.style.display = 'none';
-      dupResetBtn.style.display = (currentData !== rawData) ? '' : 'none';
-      dupBar.style.display = 'flex';
+      dupResetBtn.style.display = 'none';
     }
   }
 
   function applyFilter() {
     if (!dupInfo || dupInfo.count === 0) return;
     currentData = filterDuplicates(rawData, dupInfo.groups);
-    toast(dupInfo.count + ' duplicate(s) removed', 'success');
-    initVisualization();
+    var removed = dupInfo.count;
+    refreshVisualization();
+    toast(removed + ' duplicate(s) removed — ' + currentData.length + ' rows remaining', 'success');
   }
 
   function applyGroup() {
     if (!dupInfo || dupInfo.count === 0) return;
     var columns = Object.keys(rawData[0]);
     currentData = groupDuplicates(rawData, columns, dupInfo.groups);
-    toast('Rows grouped (' + currentData.length + ' unique groups)', 'success');
-    initVisualization();
+    refreshVisualization();
+    toast('Rows grouped — ' + currentData.length + ' unique groups', 'success');
   }
 
   function resetDedup() {
     currentData = rawData;
-    toast('Restored original dataset', 'success');
-    initVisualization();
+    refreshVisualization();
+    toast('Restored original dataset — ' + currentData.length + ' rows', 'success');
+  }
+
+  /**
+   * Rebuild chart, table, stats, and dup bar WITHOUT resetting
+   * axis selections, chart type, or dup key. Called after
+   * filter/group/reset to preserve user choices.
+   */
+  function refreshVisualization() {
+    if (!currentData || !currentData.length) return;
+
+    var columns = Object.keys(currentData[0]);
+
+    // Preserve current selections
+    var savedChartType = chartTypeSelect.value;
+    var savedX = xCol.value;
+    var savedY = yCol.value;
+    var savedDupKey = dupKeySelect.value;
+
+    // Update stats
+    datasetStats.textContent = currentData.length + ' rows \u00B7 ' + columns.length + ' columns';
+    if (currentData !== rawData && rawData) {
+      datasetStats.textContent += ' (filtered from ' + rawData.length + ')';
+    }
+
+    // Repopulate column selectors (grouped data may have __count)
+    xCol.innerHTML = '';
+    yCol.innerHTML = '';
+    columns.forEach(function (col) {
+      xCol.appendChild(new Option(col, col));
+      yCol.appendChild(new Option(col, col));
+    });
+
+    // Restore selections if they still exist, otherwise use defaults
+    if (columns.indexOf(savedX) !== -1) {
+      xCol.value = savedX;
+    }
+    if (columns.indexOf(savedY) !== -1) {
+      yCol.value = savedY;
+    }
+    chartTypeSelect.value = savedChartType;
+
+    // Rebuild chart and table
+    createChart();
+    buildTable(columns);
+
+    // Restore dup key and refresh dup info
+    // Re-check if the saved key still exists in rawData columns
+    var rawColumns = rawData ? Object.keys(rawData[0]) : columns;
+    dupKeySelect.innerHTML = '<option value="__all__">All Columns (exact match)</option>';
+    rawColumns.forEach(function (col) {
+      dupKeySelect.appendChild(new Option(col, col));
+    });
+    if (savedDupKey && (savedDupKey === '__all__' || rawColumns.indexOf(savedDupKey) !== -1)) {
+      dupKeySelect.value = savedDupKey;
+    }
+
+    refreshDupInfo();
   }
 
   // ══════════════════════════════════
