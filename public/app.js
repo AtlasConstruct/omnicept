@@ -259,10 +259,17 @@
 
       columns.forEach(function (c) {
         if (numericCols.indexOf(c) !== -1) {
-          merged[c] = 0;
+          // Sum non-null numeric values
+          var sum = 0;
+          var count = 0;
           indices.forEach(function (i) {
-            merged[c] += (typeof data[i][c] === 'number' ? data[i][c] : 0);
+            var v = data[i][c];
+            if (typeof v === 'number' && !isNaN(v)) {
+              sum += v;
+              count++;
+            }
           });
+          merged[c] = count > 0 ? sum : null;
         } else {
           merged[c] = data[indices[0]][c];
         }
@@ -495,8 +502,31 @@
 
     var xKey = xCol.value;
     var yKey = yCol.value;
-    var labels = currentData.map(function (r) { return r[xKey]; });
-    var data = currentData.map(function (r) { return r[yKey]; });
+    var labels = currentData.map(function (r) {
+      var v = r[xKey];
+      return (v != null && v !== '') ? v : '(empty)';
+    });
+    var data = currentData.map(function (r) {
+      var v = r[yKey];
+      // Coerce null, undefined, empty string to 0 for charting
+      if (v == null || v === '') return 0;
+      var n = Number(v);
+      return isNaN(n) ? v : n;
+    });
+
+    // Check if all Y values are zero/empty after coercion
+    var allEmpty = data.every(function (v) { return v === 0; });
+    if (allEmpty && currentData.length > 0) {
+      // Check if the original values were all null/empty (not actual zeros)
+      var hadRealValues = currentData.some(function (r) {
+        var v = r[yKey];
+        return v != null && v !== '' && v !== 0;
+      });
+      if (!hadRealValues) {
+        toast('All "' + yKey + '" values are empty. Try a different Y-axis column.', 'warning');
+      }
+    }
+
     var colors = generateColors(data.length);
 
     if (currentChart) currentChart.destroy();

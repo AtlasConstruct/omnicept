@@ -454,6 +454,7 @@ a:hover { color: var(--secondary); }
 
 .toast.error { border-left-color: #ef4444; }
 .toast.success { border-left-color: var(--success); }
+.toast.warning { border-left-color: var(--warning); }
 
 /* ═══════════════════════════════════
    FOOTER
