@@ -1,6 +1,6 @@
 {
   "name": "omnicept",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Data visualization for everyone. Transform any dataset into clear, actionable insights.",
   "main": "src/server.js",
   "scripts": {

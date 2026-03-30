@@ -497,6 +497,83 @@ a:hover { color: var(--secondary); }
 .footer a:hover { color: var(--primary); }
 
 /* ═══════════════════════════════════
+   DUPLICATE BAR
+   ═══════════════════════════════════ */
+.dup-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  margin-bottom: 1rem;
+}
+
+.dup-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--warning);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.8rem;
+}
+
+.dup-bar-left svg {
+  color: var(--warning);
+  flex-shrink: 0;
+}
+
+.dup-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.dup-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.dup-bar-right select {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.75rem;
+  background: var(--surface-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 0.3rem 0.5rem;
+  border-radius: 2px;
+  min-width: 120px;
+}
+
+.btn-small {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.7rem;
+}
+
+.btn-accent {
+  background: var(--accent);
+  color: var(--text);
+  border: 1px solid var(--accent);
+  cursor: pointer;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.2s;
+}
+
+.btn-accent:hover {
+  background: var(--primary-hover);
+}
+
+/* ═══════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════ */
 @media (max-width: 768px) {
@@ -520,6 +597,15 @@ a:hover { color: var(--secondary); }
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+  }
+
+  .dup-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dup-bar-right {
+    width: 100%;
   }
 
   .chart-actions {

@@ -18,7 +18,7 @@
         <img src="assets/logo.svg" alt="Omnicept" class="logo">
         <div class="logo-text">
           <h1>OMNICEPT</h1>
-          <span class="version-tag"><span>v1.0.0</span></span>
+          <span class="version-tag"><span>v1.1.0</span></span>
         </div>
       </div>
       <p class="tagline">Transform any dataset into clear, actionable insights</p>
@@ -67,6 +67,32 @@
         <div class="data-info-right">
           <button class="btn btn-ghost" id="toggle-table-btn">
             <span>View Table</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Duplicate Detection Bar -->
+      <div class="dup-bar" id="dup-bar" style="display:none;">
+        <div class="dup-bar-left">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 7v8a2 2 0 002 2h6M2 2l20 20"/>
+            <rect x="6" y="3" width="12" height="14" rx="2"/>
+          </svg>
+          <span id="dup-msg">Scanning...</span>
+        </div>
+        <div class="dup-bar-right">
+          <label for="dup-key" class="dup-label">Match by</label>
+          <select id="dup-key">
+            <option value="__all__">All Columns</option>
+          </select>
+          <button class="btn btn-small btn-accent" id="dup-filter-btn" style="display:none;">
+            <span>Filter</span>
+          </button>
+          <button class="btn btn-small btn-secondary" id="dup-group-btn" style="display:none;">
+            <span>Group</span>
+          </button>
+          <button class="btn btn-small btn-ghost" id="dup-reset-btn" style="display:none;">
+            <span>Reset</span>
           </button>
         </div>
       </div>

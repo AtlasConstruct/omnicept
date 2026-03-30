@@ -7,10 +7,12 @@
   'use strict';
 
   // ── State ──
-  let currentData = null;
+  let rawData = null;        // original parsed data (never mutated)
+  let currentData = null;    // active dataset (after dedup if applied)
   let currentChart = null;
   let fileName = '';
   let tableVisible = false;
+  let dupInfo = null;        // { count, key, groups }
 
   // ── DOM ──
   const $ = (sel) => document.querySelector(sel);
@@ -32,6 +34,12 @@
   const tableHead = $('#table-head');
   const tableBody = $('#table-body');
   const tableNote = $('#table-note');
+  const dupBar = $('#dup-bar');
+  const dupMsg = $('#dup-msg');
+  const dupKeySelect = $('#dup-key');
+  const dupFilterBtn = $('#dup-filter-btn');
+  const dupGroupBtn = $('#dup-group-btn');
+  const dupResetBtn = $('#dup-reset-btn');
 
   // ══════════════════════════════════
   // INIT
@@ -62,6 +70,12 @@
     newUploadBtn.addEventListener('click', resetToUpload);
     exportBtn.addEventListener('click', exportChart);
     toggleTableBtn.addEventListener('click', toggleTable);
+
+    // Duplicate controls
+    dupKeySelect.addEventListener('change', refreshDupInfo);
+    dupFilterBtn.addEventListener('click', applyFilter);
+    dupGroupBtn.addEventListener('click', applyGroup);
+    dupResetBtn.addEventListener('click', resetDedup);
   }
 
   // ══════════════════════════════════
@@ -106,6 +120,7 @@
         showSection('upload');
         return;
       }
+      rawData = currentData;
       initVisualization();
       showSection('viz');
       toast('Data loaded: ' + fileName, 'success');
@@ -180,6 +195,133 @@
   }
 
   // ══════════════════════════════════
+  // DUPLICATE DETECTION
+  // ══════════════════════════════════
+
+  /**
+   * Build a fingerprint string for a row.
+   * If key is '__all__', use every column; otherwise use a single column.
+   */
+  function rowFingerprint(row, columns, key) {
+    if (key === '__all__') {
+      return columns.map(function (c) { return String(row[c] != null ? row[c] : ''); }).join('\x00');
+    }
+    var v = row[key];
+    return v != null ? String(v) : '';
+  }
+
+  /**
+   * Scan rawData for duplicates.
+   * Returns { count, key, groups } where groups maps fingerprint -> [indices].
+   * Only groups with length > 1 count as duplicates.
+   */
+  function detectDuplicates(data, columns, key) {
+    var groups = {};
+    data.forEach(function (row, i) {
+      var fp = rowFingerprint(row, columns, key);
+      if (!groups[fp]) groups[fp] = [];
+      groups[fp].push(i);
+    });
+
+    var dupCount = 0;
+    Object.keys(groups).forEach(function (fp) {
+      if (groups[fp].length > 1) dupCount += groups[fp].length - 1;
+    });
+
+    return { count: dupCount, key: key, groups: groups };
+  }
+
+  /**
+   * Filter: keep only the first occurrence of each group.
+   */
+  function filterDuplicates(data, groups) {
+    var keep = new Set();
+    Object.keys(groups).forEach(function (fp) {
+      keep.add(groups[fp][0]);
+    });
+    return data.filter(function (_, i) { return keep.has(i); });
+  }
+
+  /**
+   * Group: for each duplicate group, merge rows.
+   * Numeric columns are summed; non-numeric columns keep the first value.
+   * A __count column is added.
+   */
+  function groupDuplicates(data, columns, groups) {
+    var numericCols = columns.filter(function (c) {
+      return data.some(function (r) { return typeof r[c] === 'number' && !isNaN(r[c]); });
+    });
+
+    var result = [];
+    Object.keys(groups).forEach(function (fp) {
+      var indices = groups[fp];
+      var merged = {};
+
+      columns.forEach(function (c) {
+        if (numericCols.indexOf(c) !== -1) {
+          merged[c] = 0;
+          indices.forEach(function (i) {
+            merged[c] += (typeof data[i][c] === 'number' ? data[i][c] : 0);
+          });
+        } else {
+          merged[c] = data[indices[0]][c];
+        }
+      });
+
+      merged['__count'] = indices.length;
+      result.push(merged);
+    });
+
+    return result;
+  }
+
+  /**
+   * Refresh the duplicate bar after key change.
+   */
+  function refreshDupInfo() {
+    if (!rawData || !rawData.length) return;
+
+    var columns = Object.keys(rawData[0]);
+    var key = dupKeySelect.value;
+    dupInfo = detectDuplicates(rawData, columns, key);
+
+    if (dupInfo.count > 0) {
+      dupBar.style.display = 'flex';
+      dupMsg.textContent = dupInfo.count + ' duplicate' + (dupInfo.count > 1 ? 's' : '') + ' found';
+      dupFilterBtn.style.display = '';
+      dupGroupBtn.style.display = '';
+      dupResetBtn.style.display = (currentData !== rawData) ? '' : 'none';
+    } else {
+      dupMsg.textContent = 'No duplicates detected';
+      dupFilterBtn.style.display = 'none';
+      dupGroupBtn.style.display = 'none';
+      dupResetBtn.style.display = (currentData !== rawData) ? '' : 'none';
+      dupBar.style.display = 'flex';
+    }
+  }
+
+  function applyFilter() {
+    if (!dupInfo || dupInfo.count === 0) return;
+    currentData = filterDuplicates(rawData, dupInfo.groups);
+    toast(dupInfo.count + ' duplicate(s) removed', 'success');
+    initVisualization();
+  }
+
+  function applyGroup() {
+    if (!dupInfo || dupInfo.count === 0) return;
+    var columns = Object.keys(rawData[0]);
+    currentData = groupDuplicates(rawData, columns, dupInfo.groups);
+    toast('Rows grouped (' + currentData.length + ' unique groups)', 'success');
+    initVisualization();
+  }
+
+  function resetDedup() {
+    currentData = rawData;
+    toast('Restored original dataset', 'success');
+    initVisualization();
+  }
+
+  // ══════════════════════════════════
   // VISUALIZATION INIT
   // ══════════════════════════════════
   function initVisualization() {
@@ -214,6 +356,12 @@
     if (numericCol && numericCol !== xCol.value) yCol.value = numericCol;
     else if (columns.length > 1) yCol.value = columns[1];
 
+    // Populate duplicate key selector
+    dupKeySelect.innerHTML = '<option value="__all__">All Columns (exact match)</option>';
+    columns.forEach(function (col) {
+      dupKeySelect.appendChild(new Option(col, col));
+    });
+
     // Reset table
     tableVisible = false;
     tableWrapper.style.display = 'none';
@@ -222,6 +370,7 @@
     autoDetectChartType();
     createChart();
     buildTable(columns);
+    refreshDupInfo();
   }
 
   // ══════════════════════════════════
@@ -425,11 +574,14 @@
 
   function resetToUpload() {
     if (currentChart) { currentChart.destroy(); currentChart = null; }
+    rawData = null;
     currentData = null;
+    dupInfo = null;
     fileName = '';
     fileInput.value = '';
     tableVisible = false;
     tableWrapper.style.display = 'none';
+    if (dupBar) dupBar.style.display = 'none';
     showSection('upload');
   }
 
